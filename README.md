@@ -1,2 +1,3 @@
 # CollegeSwimMap
-college search tool inspired by SwimMap
+
+College search tool inspired by [SwimMap](https://github.com/gpilgrim2670/SwimMap)
