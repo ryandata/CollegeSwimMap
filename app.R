@@ -14,7 +14,7 @@ collegedata <- read.csv("data/college_data.csv")
 fiftystatesCAN <- read.csv("fiftystatesCAN.csv")
 uniquecities <- read.csv("uniquecities.csv")
 
-Events <- ordered(BigTop100$Event, levels = c("50 Free", "100 Free", "200 Free", "500 Free", "1000 Free", "1650 Free", "100 Fly", "200 Fly", "100 Back", "200 Back", "100 Breast", "200 Breast", "100 IM", "200 IM", "400 IM", "200 Free Relay", "400 Free Relay", "800 Free Relay", "200 Medlay Relay", "400 Medlay Relay"))
+# Events <- ordered(BigTop100$Event, levels = c("50 Free", "100 Free", "200 Free", "500 Free", "1000 Free", "1650 Free", "100 Fly", "200 Fly", "100 Back", "200 Back", "100 Breast", "200 Breast", "100 IM", "200 IM", "400 IM", "200 Free Relay", "400 Free Relay", "800 Free Relay", "200 Medlay Relay", "400 Medlay Relay"))
 
 button_color_css <- "
 #DivCompClear, #FinderClear, #EnterTimes{
@@ -30,14 +30,14 @@ font-size: 15px;
 ui <- fluidPage(
 
 #Navbar structure for UI
-  navbarPage("College Swim Map", theme = shinytheme("superhero"),
-             tabPanel("Program Finder", fluid = TRUE, icon = icon("globe-americas"),
+  navbarPage("College Characteristics", theme = shinytheme("superhero"),
+             tabPanel("College Finder", fluid = TRUE, icon = icon("globe-americas"),
                       tags$style(button_color_css),
                       # Sidebar layout with a input and output definitions
                       sidebarLayout(
                         sidebarPanel(
 
-                          titlePanel("Desired Program Characteristics"),
+                          titlePanel("Desired College Characteristics"),
                           #shinythemes::themeSelector(),
                           fluidRow(column(3,
 
@@ -132,8 +132,8 @@ ui <- fluidPage(
                       )
              ),
 
-             tabPanel("Program Comparisons", fluid = TRUE, icon = icon("swimmer"),
-                      titlePanel("Program Comparisons"),
+             tabPanel("College Comparisons", fluid = TRUE, icon = icon("swimmer"),
+                      titlePanel("College Comparisons"),
                       fluidRow(
                         column(6,
                                selectizeInput(inputId = "SchoolSelectA",
@@ -510,28 +510,6 @@ server <- function(input, output, session) {
   observeEvent(input$DivCompClear, {
     brushDiv <- NULL
   })
-
-  #using click plot
-
-  # user_clickDiv <- reactiveValues()
-  # reactive({
-  #   user_clickDiv$DT <- data.frame(matrix(0, ncol = ncol(BigTop100_DivCompA()), nrow = 1))
-  #   names(user_clickDiv$DT) <- colnames(BigTop100_DivCompA())
-  # })
-  #
-  # observeEvent(input$click_plotDiv, {
-  #   add_row <-     nearPoints(BigTop100_DivCompA(), input$click_plotDiv, xvar = "Division", yvar = "Time", threshold = 8)
-  #   user_clickDiv$DT <- rbind(add_row, user_clickDiv$DT)
-  # })
-  #
-  # brushDiv <- reactive({
-  #   req(length(user_clickDiv$DT) > 1)
-  #   user_clickDiv$DT
-  # })
-  #
-  # observeEvent(input$DivCompClear, {
-  #   user_clickDiv$DT <- NULL
-  # })
 
   output$DivCompTable<-DT::renderDataTable({
     DT::datatable(unique(brushDiv()[,c("Name", "Team", "X.swim_time", "Rank", "Division", "Time")]),
