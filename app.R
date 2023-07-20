@@ -30,7 +30,7 @@ font-size: 15px;
 ui <- fluidPage(
 
 #Navbar structure for UI
-  navbarPage("College Swim Map", theme = shinytheme("superhero"),
+  navbarPage("College Search Map", theme = shinytheme("superhero"),
              tabPanel("Program Finder", fluid = TRUE, icon = icon("globe-americas"),
                       tags$style(button_color_css),
                       # Sidebar layout with a input and output definitions
@@ -41,11 +41,11 @@ ui <- fluidPage(
                           #shinythemes::themeSelector(),
                           fluidRow(column(3,
 
-                                          # Select which Gender(s) to plot
-                                          checkboxGroupInput(inputId = "GenderFinder",
-                                                             label = "Select Gender(s):",
-                                                             choices = c("Male" = "M", "Female" = "F"),
-                                                             selected = "M"),
+                                          # Select which School Type(s) to plot
+                                          checkboxGroupInput(inputId = "PublicPrivateFinder",
+                                                             label = "Select School Type:",
+                                                             choices = c("Public" = "1", "Private" = "2"),
+                                                             selected = "1"),
 
                                           # Select which Division(s) to plot
                                           checkboxGroupInput(inputId = "DivisionFinder",
@@ -201,7 +201,7 @@ server <- function(input, output, session) {
     req(input$DivisionFinder)
     req(input$RegionFinder)
     req(input$School_TypeFinder)
-    req(input$GenderFinder)
+    req(input$PublicPrivateFinder)
     req(input$EventFinder)
     #req(Input$School_Rank)
     filter(BigTop100, Division %in% input$DivisionFinder) %>%
@@ -233,7 +233,7 @@ server <- function(input, output, session) {
   output$scatterplotFinder <- renderPlot({
     input$EnterTimes
     input$show_NamesFinder
-    input$GenderFinder
+    input$PublicPrivateFinder
     input$DivisionFinder
     input$RegionFinder
     input$RankOnTeam
@@ -263,8 +263,8 @@ server <- function(input, output, session) {
           {if(length(input$DivisionFinder) <= 1) scale_color_manual(guide = "none", values = c("DI" = "#1E90FF", "DII" = "#FF8D1E", "DIII" = "#20FF1E"))} +
           {if(length(input$DivisionFinder) > 1)
             scale_color_manual(values = c("DI" = "blue", "DII" = "red", "DIII" = "green"))} +
-            {if(length(input$GenderFinder) <= 1) scale_shape_manual(guide = "none", values = c("M" = "circle", "F" = "triangle"))} +
-            {if(length(input$GenderFinder) > 1)
+            {if(length(input$PublicPrivateFinder) <= 1) scale_shape_manual(guide = "none", values = c("M" = "circle", "F" = "triangle"))} +
+            {if(length(input$PublicPrivateFinder) > 1)
               scale_shape_manual(values = c("M" = "circle", "F" = "triangle"))} +
           theme(axis.text = element_blank(), axis.ticks = element_blank()) +
           theme(plot.title = element_text(hjust=0.5, face = "bold")) +
@@ -510,28 +510,6 @@ server <- function(input, output, session) {
   observeEvent(input$DivCompClear, {
     brushDiv <- NULL
   })
-
-  #using click plot
-
-  # user_clickDiv <- reactiveValues()
-  # reactive({
-  #   user_clickDiv$DT <- data.frame(matrix(0, ncol = ncol(BigTop100_DivCompA()), nrow = 1))
-  #   names(user_clickDiv$DT) <- colnames(BigTop100_DivCompA())
-  # })
-  #
-  # observeEvent(input$click_plotDiv, {
-  #   add_row <-     nearPoints(BigTop100_DivCompA(), input$click_plotDiv, xvar = "Division", yvar = "Time", threshold = 8)
-  #   user_clickDiv$DT <- rbind(add_row, user_clickDiv$DT)
-  # })
-  #
-  # brushDiv <- reactive({
-  #   req(length(user_clickDiv$DT) > 1)
-  #   user_clickDiv$DT
-  # })
-  #
-  # observeEvent(input$DivCompClear, {
-  #   user_clickDiv$DT <- NULL
-  # })
 
   output$DivCompTable<-DT::renderDataTable({
     DT::datatable(unique(brushDiv()[,c("Name", "Team", "X.swim_time", "Rank", "Division", "Time")]),
