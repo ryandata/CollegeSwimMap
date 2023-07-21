@@ -11,10 +11,9 @@ library(SwimmeR)
 #Import Data
 BigTop100 <- read.csv("BigTop100.csv")
 collegedata <- read.csv("data/college_data.csv")
-fiftystatesCAN <- read.csv("fiftystatesCAN.csv")
-uniquecities <- read.csv("uniquecities.csv")
+fiftystatesCAN <- read.csv("fiftystates.csv")
 
-Events <- ordered(BigTop100$Event, levels = c("50 Free", "100 Free", "200 Free", "500 Free", "1000 Free", "1650 Free", "100 Fly", "200 Fly", "100 Back", "200 Back", "100 Breast", "200 Breast", "100 IM", "200 IM", "400 IM", "200 Free Relay", "400 Free Relay", "800 Free Relay", "200 Medlay Relay", "400 Medlay Relay"))
+ Events <- ordered(BigTop100$Event, levels = c("50 Free", "100 Free", "200 Free", "500 Free", "1000 Free", "1650 Free", "100 Fly", "200 Fly", "100 Back", "200 Back", "100 Breast", "200 Breast", "100 IM", "200 IM", "400 IM", "200 Free Relay", "400 Free Relay", "800 Free Relay", "200 Medlay Relay", "400 Medlay Relay"))
 
 button_color_css <- "
 #DivCompClear, #FinderClear, #EnterTimes{
@@ -30,22 +29,22 @@ font-size: 15px;
 ui <- fluidPage(
 
 #Navbar structure for UI
-  navbarPage("College Swim Map", theme = shinytheme("superhero"),
-             tabPanel("Program Finder", fluid = TRUE, icon = icon("globe-americas"),
+  navbarPage("College Characteristics Map", theme = shinytheme("cerulean"),
+             tabPanel("College Finder", fluid = TRUE, icon = icon("globe-americas"),
                       tags$style(button_color_css),
                       # Sidebar layout with a input and output definitions
                       sidebarLayout(
                         sidebarPanel(
 
-                          titlePanel("Desired Program Characteristics"),
+                          titlePanel("Desired College Characteristics"),
                           #shinythemes::themeSelector(),
                           fluidRow(column(3,
 
-                                          # Select which Gender(s) to plot
-                                          checkboxGroupInput(inputId = "GenderFinder",
-                                                             label = "Select Gender(s):",
-                                                             choices = c("Male" = "M", "Female" = "F"),
-                                                             selected = "M"),
+                                          # Select which Status(s) to plot
+                                          checkboxGroupInput(inputId = "SchoolStatusFinder",
+                                                             label = "Select School Type:",
+                                                             choices = c("Public" = "1", "Private" = "2"),
+                                                             selected = "1"),
 
                                           # Select which Division(s) to plot
                                           checkboxGroupInput(inputId = "DivisionFinder",
@@ -57,7 +56,7 @@ ui <- fluidPage(
                                  # Select which Region(s) to plot
                                  checkboxGroupInput(inputId = "RegionFinder",
                                                     label = "Select Region(s):",
-                                                    choices = c("New England" = "NewEngland", "Mid Atlantic" = "MidAtlantic", "Mid West" = "MidWest", "South", "West", "South West" = "SouthWest", "Pacific", "Alaska", "Hawaii"),
+                                                    choices = c("New England" = 1, "Mid Atlantic" = 2, "Great Lakes" = 3, "Plains" =4, "South" = 5, "Southwest" = 6, "Mountain West" = 7, "Pacific" =8),
                                                     selected = "NewEngland")
                           )),
                           # Select Event
@@ -69,27 +68,19 @@ ui <- fluidPage(
                                       ),
                           # Set Time Range
                           fluidRow(column(5,
-                                          textInput(inputId = "TimeFinderMin",
+                                          textInput(inputId = "AdmitRateFinderMin",
                                                     label = "From:",
-                                                    value = "19.00",
+                                                    value = "0",
                                                     width = "100px")
                           ),
                           column(5, ofset = 3,
-                                 textInput(inputId = "TimeFinderMax",
+                                 textInput(inputId = "AdminRateFinderMax",
                                            label = "To:",
-                                           value = "22.00",
+                                           value = "100",
                                            width = "100px")
                           )),
-                          helpText("Format example: 1:39.99"),
+                          
                           actionButton(inputId = "EnterTimes", label = "Enter Times"),
-                          hr(),
-                          sliderInput(inputId = "RankOnTeam",
-                                      label = "Select Swimmer Rank On Team",
-                                      min = 1,
-                                      max = 10,
-                                      value = c(1,6),
-                                      width = "220px"),
-                          helpText("For example: Find 1st fastest through 6th fastest athletes on a given team"),
                           hr(),
                           titlePanel("School Characteristics"),
                           # Select which School Type to plot
@@ -132,7 +123,7 @@ ui <- fluidPage(
                       )
              ),
 
-             tabPanel("Program Comparisons", fluid = TRUE, icon = icon("swimmer"),
+             tabPanel("Program Comparisons", fluid = TRUE, icon = icon("graduation-cap"),
                       titlePanel("Program Comparisons"),
                       fluidRow(
                         column(6,
@@ -184,21 +175,32 @@ server <- function(input, output, session) {
 
   #Program Finder
 
-  TimeFinderDF <- reactive({
-    req(input$TimeFinderMin)
-    TimeFinderDF <- as.data.frame(c(input$TimeFinderMin, input$TimeFinderMax))
-    names(TimeFinderDF)[1] <- "UserTimes"
-    TimeFinderDF$UserTimes <- as.character(TimeFinderDF$UserTimes)
-    TimeFinderDF <- tidyr::separate(TimeFinderDF, col = UserTimes, c("min", "sec"), sep = ":", remove = FALSE, extra = "drop", fill = "left")
-  TimeFinderDF[is.na(TimeFinderDF)] <- 0
-  TimeFinderDF$sec <- as.numeric(TimeFinderDF$sec)
-  TimeFinderDF$min <- as.numeric(TimeFinderDF$min)
-  TimeFinderDF <- TimeFinderDF %>%
-    mutate(Time = (TimeFinderDF$min*60) + TimeFinderDF$sec)
-  })
+#  AdmitRateFinderDF <- reactive({
+ #   req(input$AdmitRateFinderMin)
+  #  AdmitRateFinderDF <- as.data.frame(c(input$AdmitRateFinderMin, input$AdmitRateFinderMax))
+   # names(AdmitRateFinderDF)[1] <- "UserTimes"
+    # AdmitRateFinderDF$UserTimes <- as.character(AdmitRateFinderDF$UserTimes)
+    # AdmitRateFinderDF <- tidyr::separate(AdmitRateFinderDF, col = UserTimes, c("min", "sec"), sep = ":", remove = FALSE, extra = "drop", fill = "left")
+    # AdmitRateFinderDF[is.na(AdmitRateFinderDF)] <- 0
+    # AdmitRateFinderDF$sec <- as.numeric(AdmitRateFinderDF$sec)
+    # AdmitRateFinderDF$min <- as.numeric(AdmitRateFinderDF$min)
+    # AdmitRateFinderDF <- AdmitRateFinderDF %>%
+    # mutate(Time = (AdmitRateFinderDF$min*60) + AdmitRateFinderDF$sec)
+#  })
 
+  CollegeDataFinder <- reactive({
+    req(input$AdmitRateFinderMin)
+    req(input$AdmitRateFinderMax)
+    req(input$School_TypeFinder)
+    req(input$RegionFinder)
+    filter(collegedata, ADM_RATE >= input$AdmitRateFinderMin) %>%
+    filter(collegedata, ADM_RATE <= input$AdmitRateFinderMax) %>%
+    filter(REGION %in% input$RegionFinder) %>%
+    filter(SCHTYPE %in% input$SchoolStatusFinder)
+  })
+  
   BigTop100_finder <- reactive({
-    req(input$DivisionFinder)
+    #req(input$DivisionFinder)
     req(input$RegionFinder)
     req(input$School_TypeFinder)
     req(input$GenderFinder)
@@ -224,16 +226,10 @@ server <- function(input, output, session) {
     filter(fiftystatesCAN, GeoRegion %in% input$RegionFinder)
   })
 
-  uniquecities_Finder <- reactive({
-    req(input$RegionFinder)
-    filter(uniquecities, Region %in% input$RegionFinder) %>%
-      filter(Team %in% BigTop100_finder()$Team)
-  })
-
   output$scatterplotFinder <- renderPlot({
     input$EnterTimes
     input$show_NamesFinder
-    input$GenderFinder
+    input$SchoolTypeFinder
     input$DivisionFinder
     input$RegionFinder
     input$RankOnTeam
@@ -250,14 +246,12 @@ server <- function(input, output, session) {
       } else {
         ggplot() +
           geom_polygon(data = fiftystatesCAN_Finder(), aes(x = long, y = lat, group = group), color = "white", fill = "grey") +
-          geom_point(data = uniquecities_Finder(), aes(x = lon, y = lat, alpha = 0.8)) +
-          {if(input$show_NamesFinder == "School Names") geom_text_repel(data = uniquecities_Finder(), aes(x = lon, y = lat, label = as.character(Team)))} +
-          {if(input$show_NamesFinder == "City Names") geom_text_repel(data = uniquecities_Finder(), aes(x = lon, y = lat, label = as.character(City)))} +
+          {if(input$show_NamesFinder == "School Names") geom_text_repel(data = CollegeDataFinder(), aes(x = LONGITUDE, y = LATITUDE, label = as.character(ALIAS)))}
           coord_quickmap() +
           guides(fill = FALSE) +
-          geom_point(data = BigTop100_finder(), aes(x = lon, y = lat, color = Division, shape = Sex), alpha = 0.5) +
+          geom_point(data = CollegeDataFinder(), aes(x = LONGITUDE, y = LATITUDE, color = ADM_RATE, shape = SCHTYPE), alpha = 0.5) +
           theme_void() +
-          labs(color = "Division", shape = "Gender"
+          labs(color = "Admit Rate", shape = "School Type"
                #, title = pretty_plot_title()
           ) +
           {if(length(input$DivisionFinder) <= 1) scale_color_manual(guide = "none", values = c("DI" = "#1E90FF", "DII" = "#FF8D1E", "DIII" = "#20FF1E"))} +
@@ -305,7 +299,7 @@ server <- function(input, output, session) {
 
   output$schoolstableFinder<-DT::renderDataTable({
 
-    DT::datatable(unique(brushFinder()[,c("Name", "Class", "X.swim_time", "Team", "Relative_RankInEvent_Team", "Division", "Address", "Y2019", "Type", "Time")]),
+    DT::datatable(unique(brushFinder()[,c("Name", "SAT Verbal", "SAT Math", "Admit Rate", "Completion 1st Gen", "Completion Not 1st Gen", "Address", "Y2019", "Type", "Time")]),
                   colnames = c("Sort" = "Time", "Time" = "X.swim_time", "US News School Ranking" = "Y2019", "School Type" = "Type", "Swimmer Rank In Event On Team" = "Relative_RankInEvent_Team"),
                   rownames = FALSE,
                   options = list(order = list(9, 'asc'),
@@ -316,6 +310,7 @@ server <- function(input, output, session) {
 
   })
 
+  # ALIAS, SATVRMD, SATMTMD, ADM_RATE, FIRSTGEN_COMP_ORIG_RT, NOT1STGEN_COMP_ORIG_RT
   #Program Comparisons
 
   BigTop100_SchoolComp <- reactive({
@@ -386,164 +381,6 @@ server <- function(input, output, session) {
     }
   })
 
-  #Division Comparisons
-
-  BigTop100_subsetACA_DI <- reactive({
-    req(input$GenderDI)
-    req(input$RegionDI)
-    req(input$RankDI)
-    filter(BigTop100, Division == "DI") %>%
-      filter(Sex %in% input$GenderDI) %>%
-      filter(Region %in% input$RegionDI) %>%
-      filter(Rank >= input$RankDI[1], Rank <= input$RankDI[2]) %>%
-      filter(Y2019 >= input$School_RankDI[1], Y2019 <= input$School_RankDI[2]) %>%
-      group_by(Team) %>%
-      dplyr::mutate('No. of Top Times' = n())
-  })
-
-  BigTop100_subsetACA_DII <- reactive({
-    req(input$GenderDII)
-    req(input$RegionDII)
-    req(input$RankDII)
-    filter(BigTop100, Division == "DII") %>%
-      filter(Sex %in% input$GenderDII) %>%
-      filter(Region %in% input$RegionDII) %>%
-      filter(Rank >= input$RankDII[1], Rank <= input$RankDII[2]) %>%
-      filter(Y2019 >= input$School_RankDII[1], Y2019 <= input$School_RankDII[2]) %>%
-      group_by(Team) %>%
-      dplyr::mutate('No. of Top Times' = n())
-  })
-
-  BigTop100_subsetACA_DIII <- reactive({
-    req(input$GenderDIII)
-    req(input$RegionDIII)
-    req(input$RankDIII)
-    filter(BigTop100, Division == "DIII") %>%
-      filter(Sex %in% input$GenderDIII) %>%
-      filter(Region %in% input$RegionDIII) %>%
-      filter(Rank >= input$RankDIII[1], Rank <= input$RankDIII[2]) %>%
-      filter(Y2019 >= input$School_RankDIII[1], Y2019 <= input$School_RankDIII[2]) %>%
-      group_by(Team) %>%
-      dplyr::mutate('No. of Top Times' = n())
-  })
-
-  BigTop100_DivCompA <- reactive({
-    req(input$DivCompGenderA)
-    req(input$DivCompRankA)
-    req(input$DivCompRaceA)
-    filter(BigTop100, Sex %in% input$DivCompGenderA) %>%
-    filter(Rank >= input$DivCompRankA[1], Rank <= input$DivCompRankA[2]) %>%
-    filter(Event %in% input$DivCompRaceA)
-  })
-  reactive({
-  BigTop100_DivCompA$Time <- as.numeric(format(BigTop100_DivCompA()$Time, nsmall = 2))
-  })
-
-
-  output$barplotDI <- renderPlot({
-    ggplot() +
-    geom_bar(data = BigTop100_subsetACA_DI(), aes(x = Division, y = (..count../sum(..count..)*100), fill = Type)) +
-    labs(y = "Percent", x = "Divison") +
-    coord_polar("y", start=0) +
-    scale_fill_manual(values = c("National University" = "#1E90FF", "National Liberal Arts College" = "#FD1EFF", "Regional College" = "#FF8D1E", "Regional University" = "#20FF1E"), aesthetics = "fill") +
-    theme_void()
-  })
-
-  output$description_DI <- renderText({
-    paste0("Division I is primarily made of national universities, with a sizable subset of regional universities.
-           There are relatively few colleges.")
-  })
-
-  output$barplotDII <- renderPlot({
-    ggplot() +
-      geom_bar(data = BigTop100_subsetACA_DII(), aes(x = Division, y = (..count../sum(..count..)*100), fill = Type)) +
-      labs(y = "Percent", x = "Divison") +
-      scale_fill_manual(values = c("National University" = "#1E90FF", "National Liberal Arts College" = "#FD1EFF", "Regional College" = "#FF8D1E", "Regional University" = "#20FF1E"), aesthetics = "fill") +
-      coord_polar("y", start=0) +
-      theme_void()
-  })
-
-  output$description_DII <- renderText({
-    paste0("Division II is primarily made of regional universities, with a national universities as the second largest component.
-           There are relatively few national or regional colleges.")
-  })
-
-  output$barplotDIII <- renderPlot({
-    ggplot() +
-      geom_bar(data = BigTop100_subsetACA_DIII(), aes(x = Division, y = (..count../sum(..count..)*100), fill = Type)) +
-      labs(y = "Percent", x = "Divison") +
-      scale_fill_manual(values = c("National University" = "#1E90FF", "National Liberal Arts College" = "#FD1EFF", "Regional College" = "#FF8D1E", "Regional University" = "#20FF1E"), aesthetics = "fill") +
-      coord_polar("y", start=0) +
-      theme_void()
-  })
-
-  output$description_DIII <- renderText({
-    paste0("Division III is primarily made of national universities and national liberal arts colleges.
-          Regional universities and colleges are a smaller component")
-  })
-
-  output$DivCompPlotA <- renderPlot({
-      ggplot(data = BigTop100_DivCompA(), aes(y = Time, x = Division, color = Division)) +
-      geom_violin() +
-      geom_jitter(position = position_jitter(width = 0.08), alpha = 0.5, size = 3) +
-      theme_minimal() +
-      labs(x = NULL, y = NULL) +
-      scale_color_manual(values = c("DI" = "#1E90FF", "DII" = "#FF8D1E", "DIII" = "#20FF1E")) +
-      theme(legend.title=element_blank(), panel.grid.major = element_line(color = "white"), panel.grid.minor = element_line(color = "white")) +
-      theme(plot.title = element_text(hjust=0.5, face = "bold")) +
-      theme(legend.position="none") +
-      scale_y_continuous(labels = scales::trans_format("identity", mmss_format)) +
-      theme(legend.text = element_text(size = 12),
-            legend.title = element_text(size = 15),
-            axis.text.x = element_text(size = 15),
-            axis.text.y = element_text(size = 15))
-  })
-
-  #using brush plot
-
-  brushDiv <- reactive({
-    user_brushDiv <- input$brush_plotDiv
-    brushedPoints(BigTop100_DivCompA(), user_brushDiv, xvar = "Division", yvar =
-                    "Time")
-  })
-
-  observeEvent(input$DivCompClear, {
-    brushDiv <- NULL
-  })
-
-  #using click plot
-
-  # user_clickDiv <- reactiveValues()
-  # reactive({
-  #   user_clickDiv$DT <- data.frame(matrix(0, ncol = ncol(BigTop100_DivCompA()), nrow = 1))
-  #   names(user_clickDiv$DT) <- colnames(BigTop100_DivCompA())
-  # })
-  #
-  # observeEvent(input$click_plotDiv, {
-  #   add_row <-     nearPoints(BigTop100_DivCompA(), input$click_plotDiv, xvar = "Division", yvar = "Time", threshold = 8)
-  #   user_clickDiv$DT <- rbind(add_row, user_clickDiv$DT)
-  # })
-  #
-  # brushDiv <- reactive({
-  #   req(length(user_clickDiv$DT) > 1)
-  #   user_clickDiv$DT
-  # })
-  #
-  # observeEvent(input$DivCompClear, {
-  #   user_clickDiv$DT <- NULL
-  # })
-
-  output$DivCompTable<-DT::renderDataTable({
-    DT::datatable(unique(brushDiv()[,c("Name", "Team", "X.swim_time", "Rank", "Division", "Time")]),
-                  colnames = c("Sort" = "Time", "Time" = "X.swim_time", "Rank In Division" = "Rank"),
-                  rownames = FALSE,
-                  options = list(order = list(5, 'asc'),
-                                 columnDefs = list(list(visible=FALSE, targets=c(5)),
-                                                   list(className = "dt-center", targets = 1:5)
-                                 ))
-    )
-  })
 }
 # Run the application
 shinyApp(ui = ui, server = server)
-

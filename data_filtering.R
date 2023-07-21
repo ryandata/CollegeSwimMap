@@ -92,3 +92,35 @@ institution_data_20 <- institution_data_19 %>%
 # export output (2381 obs of 983 variables)
 
 write_csv(institution_data_20, "data/college_data.csv")
+
+
+# recoding regions
+
+fiftystates <- read_csv("fiftystatesCAN.csv")
+
+fifty_states_revised <- fiftystates %>%
+  mutate(
+    REGION_CODE = case_when(
+    GeoRegion == "NewEngland" ~ '1',
+    GeoRegion == "MidAtlantic" ~ '2',
+    GeoRegion == "MidWest" ~ '3',
+    GeoRegion == "Plains" ~ '4',
+    GeoRegion == "South" ~ '5',
+    GeoRegion == "SouthWest" ~ '6',
+    GeoRegion == "West" ~ '7',
+    GeoRegion == "Pacific" ~ '8',
+    )
+  )
+
+# ifelse(fiftystates$GeoRegion=="NewEngland", fiftystates$REGION_CODE<-1,
+#       ifelse(fiftystates$GeoRegion=="MidAtlantic", fiftystates$REGION_CODE<-2,
+#       ifelse(fiftystates$GeoRegion=="MidWest", fiftystates$REGION_CODE<-3,
+#       ifelse(fiftystates$GeoRegion=="Plains", fiftystates$REGION_CODE<-4,
+#      ifelse(fiftystates$GeoRegion=="South", fiftystates$REGION_CODE<-5,
+#      ifelse(fiftystates$GeoRegion=="SouthWest", fiftystates$REGION_CODE<-6,
+#      ifelse(fiftystates$GeoRegion=="West", fiftystates$REGION_CODE<-7,
+#      ifelse(fiftystates$GeoRegion=="Pacific", fiftystates$REGION_CODE<-8,
+#      fiftystates$REGION_CODE<-"NA"
+#      ))))))))
+
+write_csv(fifty_states_revised, "fiftystates.csv")
