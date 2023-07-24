@@ -11,7 +11,7 @@ library(SwimmeR)
 #Import Data
 BigTop100 <- read.csv("BigTop100.csv")
 collegedata <- read.csv("data/college_data.csv")
-fiftystatesCAN <- read.csv("fiftystates.csv")
+fiftystates <- read.csv("fiftystates.csv")
 
  Events <- ordered(BigTop100$Event, levels = c("50 Free", "100 Free", "200 Free", "500 Free", "1000 Free", "1650 Free", "100 Fly", "200 Fly", "100 Back", "200 Back", "100 Breast", "200 Breast", "100 IM", "200 IM", "400 IM", "200 Free Relay", "400 Free Relay", "800 Free Relay", "200 Medlay Relay", "400 Medlay Relay"))
 
@@ -46,18 +46,13 @@ ui <- fluidPage(
                                                              choices = c("Public" = "1", "Private" = "2"),
                                                              selected = "1"),
 
-                                          # Select which Division(s) to plot
-                                          checkboxGroupInput(inputId = "DivisionFinder",
-                                                             label = "Select Division(s):",
-                                                             choices = c("DI", "DII", "DIII"),
-                                                             selected = "DI")
                           ),
                           column(6, offset = 2,
                                  # Select which Region(s) to plot
                                  checkboxGroupInput(inputId = "RegionFinder",
                                                     label = "Select Region(s):",
                                                     choices = c("New England" = 1, "Mid Atlantic" = 2, "Great Lakes" = 3, "Plains" =4, "South" = 5, "Southwest" = 6, "Mountain West" = 7, "Pacific" =8),
-                                                    selected = "NewEngland")
+                                                    selected = 1)
                           )),
                           # Select Event
                           selectInput(inputId = "EventFinder",
@@ -102,7 +97,7 @@ ui <- fluidPage(
 
                                    radioButtons(inputId = "show_NamesFinder",
                                                 label = "Display:",
-                                                choices = c("School Names", "City Names", "Neither"),
+                                                choices = c("School Names", "No names"),
                                                  selected = "School Names")
                             )),
                           # hr(),
@@ -140,17 +135,6 @@ ui <- fluidPage(
                                            selected = "50 Free"),
                                helpText("Select school and event to create plots")
                         ),
-                        column(6,
-                               checkboxGroupInput(inputId = "SchoolCompGender",
-                                                  label = "Select Gender(s):",
-                                                  choices = c("Male" = "M", "Female" = "F"),
-                                                  selected = "M"),
-                               radioButtons(inputId = "TuitionType",
-                                            label = "Use In-State Tution?",
-                                            choices = c("Yes", "No"),
-                                            selected = "Yes"),
-                               helpText("Note: In-state tuition will only apply to public schools")
-                        )
                       ),
                       hr(),
                       fluidRow(
@@ -193,44 +177,43 @@ server <- function(input, output, session) {
     req(input$AdmitRateFinderMax)
     req(input$School_TypeFinder)
     req(input$RegionFinder)
-    filter(collegedata, ADM_RATE >= input$AdmitRateFinderMin) %>%
-    filter(collegedata, ADM_RATE <= input$AdmitRateFinderMax) %>%
+    collegedata %>%
+    filter(ADM_RATE >= input$AdmitRateFinderMin) %>%
+    filter(ADM_RATE <= input$AdmitRateFinderMax) %>%
     filter(REGION %in% input$RegionFinder) %>%
     filter(SCHTYPE %in% input$SchoolStatusFinder)
   })
-  
-  BigTop100_finder <- reactive({
+  #  TopSchools_finder <- reactive({
     #req(input$DivisionFinder)
-    req(input$RegionFinder)
-    req(input$School_TypeFinder)
-    req(input$GenderFinder)
-    req(input$EventFinder)
+#    req(input$RegionFinder)
+#    req(input$School_TypeFinder)
+#    req(input$GenderFinder)
+#    req(input$EventFinder)
     #req(Input$School_Rank)
-    filter(BigTop100, Division %in% input$DivisionFinder) %>%
-      filter(Region %in% input$RegionFinder) %>%
-      filter(Event %in% input$EventFinder) %>%
-      filter(Time >= TimeFinderDF()$Time[1], Time <= TimeFinderDF()$Time[2]) %>%
-      filter(Sex %in% input$GenderFinder) %>%
-      filter(Type %in% input$School_TypeFinder) %>%
-      filter(Y2019 >= input$School_RankFinder[1], Y2019 <= input$School_RankFinder[2]) %>%
-      filter(RankInEvent_Team >= input$RankOnTeam[1], RankInEvent_Team <= input$RankOnTeam[2]) %>%
-      group_by(Team, Event) %>%
-      dplyr::mutate(Entries = n()) %>%
-      dplyr::mutate(MinTime = mmss_format(min(Time))) %>%
-      dplyr::mutate(MaxTime = mmss_format(max(Time)))
+#    filter(BigTop100, Division %in% input$DivisionFinder) %>%
+#      filter(Region %in% input$RegionFinder) %>%
+#      filter(Event %in% input$EventFinder) %>%
+#      filter(Time >= TimeFinderDF()$Time[1], Time <= TimeFinderDF()$Time[2]) %>%
+#      filter(Sex %in% input$GenderFinder) %>%
+#      filter(Type %in% input$School_TypeFinder) %>%
+#      filter(Y2019 >= input$School_RankFinder[1], Y2019 <= input$School_RankFinder[2]) %>%
+#      filter(RankInEvent_Team >= input$RankOnTeam[1], RankInEvent_Team <= input$RankOnTeam[2]) %>%
+#      group_by(Team, Event) %>%
+#      dplyr::mutate(Entries = n()) %>%
+#      dplyr::mutate(MinTime = mmss_format(min(Time))) %>%
+#      dplyr::mutate(MaxTime = mmss_format(max(Time)))
 
-  })
+#  })
 
-  fiftystatesCAN_Finder <- reactive({
+  fiftystates_Finder <- reactive({
     req(input$RegionFinder)
-    filter(fiftystatesCAN, GeoRegion %in% input$RegionFinder)
+    filter(fiftystates, REGION_CODE %in% input$RegionFinder)
   })
 
   output$scatterplotFinder <- renderPlot({
     input$EnterTimes
     input$show_NamesFinder
     input$SchoolTypeFinder
-    input$DivisionFinder
     input$RegionFinder
     input$RankOnTeam
     input$School_TypeFinder
@@ -238,15 +221,15 @@ server <- function(input, output, session) {
     isolate({
       if (length(BigTop100_finder()$Address) == 0) {
         ggplot() +
-          geom_polygon(data = fiftystatesCAN_Finder(), aes(x = long, y = lat, group = group), color = "white", fill = "grey") +
+          geom_polygon(data = fiftystates_Finder(), aes(x = long, y = lat, group = group), color = "white", fill = "grey") +
           coord_quickmap() +
           theme_void() +
           ggtitle("No programs fit selected characteristics. \nPlease modify selections.") +
           theme(plot.title = element_text(face = "bold", color = "#FF8D1E", size = 20))
       } else {
         ggplot() +
-          geom_polygon(data = fiftystatesCAN_Finder(), aes(x = long, y = lat, group = group), color = "white", fill = "grey") +
-          {if(input$show_NamesFinder == "School Names") geom_text_repel(data = CollegeDataFinder(), aes(x = LONGITUDE, y = LATITUDE, label = as.character(ALIAS)))}
+          geom_polygon(data = fiftystates_Finder(), aes(x = long, y = lat, group = group), color = "white", fill = "grey") +
+          {if(input$show_NamesFinder == "School Names") geom_text_repel(data = CollegeDataFinder(), aes(x = LONGITUDE, y = LATITUDE, label = as.character(INST)))}
           coord_quickmap() +
           guides(fill = FALSE) +
           geom_point(data = CollegeDataFinder(), aes(x = LONGITUDE, y = LATITUDE, color = ADM_RATE, shape = SCHTYPE), alpha = 0.5) +
@@ -254,12 +237,6 @@ server <- function(input, output, session) {
           labs(color = "Admit Rate", shape = "School Type"
                #, title = pretty_plot_title()
           ) +
-          {if(length(input$DivisionFinder) <= 1) scale_color_manual(guide = "none", values = c("DI" = "#1E90FF", "DII" = "#FF8D1E", "DIII" = "#20FF1E"))} +
-          {if(length(input$DivisionFinder) > 1)
-            scale_color_manual(values = c("DI" = "blue", "DII" = "red", "DIII" = "green"))} +
-            {if(length(input$GenderFinder) <= 1) scale_shape_manual(guide = "none", values = c("M" = "circle", "F" = "triangle"))} +
-            {if(length(input$GenderFinder) > 1)
-              scale_shape_manual(values = c("M" = "circle", "F" = "triangle"))} +
           theme(axis.text = element_blank(), axis.ticks = element_blank()) +
           theme(plot.title = element_text(hjust=0.5, face = "bold")) +
           theme(plot.background = element_rect(fill = "white"), plot.margin = unit(c(0.5,0.5,0.5,0.5), "cm")) +
@@ -313,73 +290,73 @@ server <- function(input, output, session) {
   # ALIAS, SATVRMD, SATMTMD, ADM_RATE, FIRSTGEN_COMP_ORIG_RT, NOT1STGEN_COMP_ORIG_RT
   #Program Comparisons
 
-  BigTop100_SchoolComp <- reactive({
-    req(input$SchoolCompGender)
-    req(input$SchoolSelectA)
-    req(input$SchoolCompRace)
-    filter(BigTop100, Sex %in% input$SchoolCompGender) %>%
-      filter(Event %in% input$SchoolCompRace) %>%
-      filter(Team %in% input$SchoolSelectA | Team %in% input$SchoolSelectB)
+ # BigTop100_SchoolComp <- reactive({
+ #    req(input$SchoolCompGender)
+ #    req(input$SchoolSelectA)
+ #    req(input$SchoolCompRace)
+ #    filter(BigTop100, Sex %in% input$SchoolCompGender) %>%
+ #      filter(Event %in% input$SchoolCompRace) %>%
+ #      filter(Team %in% input$SchoolSelectA | Team %in% input$SchoolSelectB)
 
-  })
-  reactive({
-    BigTop100_SchoolComp$Time <- as.numeric(format(BigTop100_SchoolComp()$Time, nsmall = 2))
-  })
+ #  })
+ #  reactive({
+ #    BigTop100_SchoolComp$Time <- as.numeric(format(BigTop100_SchoolComp()$Time, nsmall = 2))
+ #  })
 
-  output$SchoolCompPlotEvent <- renderPlot({
-    ggplot(data = BigTop100_SchoolComp(), aes(y = Time, x = Team, color = Team)) +
-      geom_boxplot(outlier.shape = NA) +
-      geom_jitter(position = position_jitter(width = 0.05), alpha = 0.8) +
-      scale_color_manual(values=c("#1E90FF", "#20FF1E", "#FF8D1E", "#FD1EFF")) +
-      theme_minimal() +
-      labs(x = NULL, y = NULL) +
-      theme(legend.title=element_blank(), panel.grid.major = element_line(color = "white"), panel.grid.minor = element_line(color = "white")) +
-      theme(plot.title = element_text(hjust=0.5, face = "bold")) +
-      theme(legend.position="none") +
-      scale_y_continuous(labels = scales::trans_format("identity", mmss_format)) +
-      theme(legend.text = element_text(size = 12),
-            legend.title = element_text(size = 15),
-            axis.text.x = element_text(size = 15),
-            axis.text.y = element_text(size = 15))
-
-
-  })
-
-  output$SchoolCompDT<-DT::renderDataTable({
-    DT::datatable(BigTop100_SchoolComp()[,c("Name", "Team", "X.swim_time", "Class", "Rank", "Division", "Time")],
-                  colnames = c("Sort" = "Time", "Time" = "X.swim_time"),
-                  rownames = FALSE,
-                  options = list(order = list(6, 'asc'),
-                                 columnDefs = list(list(visible=FALSE, targets=6),
-                                                   list(className = "dt-center", targets = 1:5)
-                                                   #list(className = "dt-right", targets = 5)
-                                 ))
-
-    )
-  })
+ #  output$SchoolCompPlotEvent <- renderPlot({
+ #    ggplot(data = BigTop100_SchoolComp(), aes(y = Time, x = Team, color = Team)) +
+ #      geom_boxplot(outlier.shape = NA) +
+ #      geom_jitter(position = position_jitter(width = 0.05), alpha = 0.8) +
+ #      scale_color_manual(values=c("#1E90FF", "#20FF1E", "#FF8D1E", "#FD1EFF")) +
+ #      theme_minimal() +
+ #      labs(x = NULL, y = NULL) +
+ #      theme(legend.title=element_blank(), panel.grid.major = element_line(color = "white"), panel.grid.minor = element_line(color = "white")) +
+ #      theme(plot.title = element_text(hjust=0.5, face = "bold")) +
+ #      theme(legend.position="none") +
+ #      scale_y_continuous(labels = scales::trans_format("identity", mmss_format)) +
+ #      theme(legend.text = element_text(size = 12),
+ #          legend.title = element_text(size = 15),
+ #          axis.text.x = element_text(size = 15),
+ #          axis.text.y = element_text(size = 15))
 
 
-  output$SchoolCompStats<-DT::renderDataTable({
-    if(input$TuitionType == "Yes"){
-      DT::datatable(unique(BigTop100_SchoolComp()[,c("Team", "Type", "Y2019", "Tuition_In", "Enrollment", "Public")]),
-                    colnames = c("US News Ranking" = "Y2019", "Tuition" = "Tuition_In"),
-                    rownames = FALSE,
-                    options = list(order = list(0, 'asc'),
-                                   columnDefs = list(list(className = "dt-center", targets = 1:5)),
-                                   dom = 't'
+ #  })
 
-                    ))
-    }
-    else if(input$TuitionType == "No"){
-      DT::datatable(unique(BigTop100_SchoolComp()[,c("Team", "Type", "Y2019", "Tuition_Out", "Enrollment", "Public")]),
-                    colnames = c("US News Ranking" = "Y2019", "Tuition" = "Tuition_Out"),
-                    rownames = FALSE,
-                    options = list(order = list(0, 'asc'),
-                                   dom = 't',
-                                   list(columnDefs = list(list(className = "dt-center", targets = 1:5)))
-                    ))
-    }
-  })
+ #  output$SchoolCompDT<-DT::renderDataTable({
+ #    DT::datatable(BigTop100_SchoolComp()[,c("Name", "Team", "X.swim_time", "Class", "Rank", "Division", "Time")],
+ #                  colnames = c("Sort" = "Time", "Time" = "X.swim_time"),
+ #                  rownames = FALSE,
+ #                  options = list(order = list(6, 'asc'),
+ #                                 columnDefs = list(list(visible=FALSE, targets=6),
+ #                                                   list(className = "dt-center", targets = 1:5)
+ #                                                  #list(className = "dt-right", targets = 5)
+ #                                 ))
+
+ #   )
+ #   })
+
+
+ # output$SchoolCompStats<-DT::renderDataTable({
+ #    if(input$TuitionType == "Yes"){
+ #      DT::datatable(unique(BigTop100_SchoolComp()[,c("Team", "Type", "Y2019", "Tuition_In", "Enrollment", "Public")]),
+ #                    colnames = c("US News Ranking" = "Y2019", "Tuition" = "Tuition_In"),
+ #                    rownames = FALSE,
+ #                    options = list(order = list(0, 'asc'),
+ #                                   columnDefs = list(list(className = "dt-center", targets = 1:5)),
+ #                                   dom = 't'
+
+ #                    ))
+ #    }
+ #    else if(input$TuitionType == "No"){
+ #      DT::datatable(unique(BigTop100_SchoolComp()[,c("Team", "Type", "Y2019", "Tuition_Out", "Enrollment", "Public")]),
+ #                    colnames = c("US News Ranking" = "Y2019", "Tuition" = "Tuition_Out"),
+ #                    rownames = FALSE,
+ #                    options = list(order = list(0, 'asc'),
+ #                                   dom = 't',
+ #                                   list(columnDefs = list(list(className = "dt-center", targets = 1:5)))
+ #                    ))
+ #    }
+ #  })
 
 }
 # Run the application
